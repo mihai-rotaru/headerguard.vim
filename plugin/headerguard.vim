@@ -9,6 +9,9 @@ if exists("loaded_headerguard")
 endif
 let loaded_headerguard = 1
 
+if ! exists("g:headerguard_namespace_name")
+    let g:headerguard_namespace_name = 'my_namespace'
+endif
 
 " Save 'cpoptions' and set Vim default to enable line continuations.
 let s:save_cpoptions = &cpoptions
@@ -35,6 +38,18 @@ endif
 if ! exists("*g:HeaderguardLine3")
     function! g:HeaderguardLine3()
         return "#endif /* " . g:HeaderguardName() . " */"
+    endfunction
+endif
+
+if ! exists("g:HeaderguardNamespaceOpen")
+    function! g:HeaderguardNamespaceOpen()
+        return "namespace " . g:headerguard_namespace_name . " {"
+    endfunction
+endif
+
+if ! exists("g:HeaderguardNamespaceClose")
+    function! g:HeaderguardNamespaceClose()
+        return "} // namespace " . g:headerguard_namespace_name
     endfunction
 endif
 
@@ -85,10 +100,23 @@ function! s:HeaderguardAdd()
         " Position at unexpected #define.
         call cursor(s:guardDefine, 1)
 
-    else
-        " No header guard found.
-        call append(0, [ g:HeaderguardLine1(), g:HeaderguardLine2(), "" ])
+    else " No header guard found.
+        " open header guard
+        call append(0, [ g:HeaderguardLine1(), g:HeaderguardLine2() ] )
+
+        " open namespace
+        if exists("g:headerguard_namespace_guard")
+            call append(line("$"), [ g:HeaderguardNamespaceOpen(), "","" ] )
+        endif
+        
+        " close namespace
+        if exists("g:headerguard_namespace_guard")
+            call append(line("$"), [ g:HeaderguardNamespaceClose() ] )
+        endif
+        
+        " close header guard
         call append(line("$"), ["", g:HeaderguardLine3()])
+        
         call cursor(1, 1)
     endif
 endfunction
